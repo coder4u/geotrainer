@@ -7,7 +7,9 @@ import shadow from 'leaflet/dist/images/marker-shadow.png';
 import type { LatLng, LatLngTuple } from "leaflet"
 import "leaflet/dist/leaflet.css"
 import {
-    MapContainer, Marker,
+    GeoJSON,
+    MapContainer,
+    Marker,
     Rectangle,
     TileLayer,
     useMap,
@@ -15,8 +17,8 @@ import {
     ZoomControl,
 } from "react-leaflet"
 import { useAppSelector, useAppDispatch } from "../../app/hooks.ts"
-import {useGetSettlementsByBoundsQuery} from "./mapAPI.ts";
-import {setAllVariants, setParam, setStep} from "../game/gameSlice.ts";
+import {useGetCountryBordersQuery, useGetSettlementsByBoundsQuery} from "./mapAPI.ts";
+import {questionCount, setAllVariants, setParam, setStep} from "../game/gameSlice.ts";
 import Loading from "../loading/Loading.tsx";
 
 const position: LatLngTuple = [50.4501, 30.5234]
@@ -182,9 +184,10 @@ export const Map = (): JSX.Element => {
         }
     }, [rectangleLatLngBounds]);
 
-    const {currentData: settlementsData, refetch, isFetching, isError, } = useGetSettlementsByBoundsQuery(rectangleBounds as RectangleBounds, {
+    const {currentData: settlementsData, isFetching, isError, } = useGetSettlementsByBoundsQuery(rectangleBounds as RectangleBounds, {
         skip: !rectangleBounds || step !== "questions",
     });
+    const {data: countryBorders} = useGetCountryBordersQuery();
 
     const isLabelsShown = step !== "questions"
     const imageryTileLayerUrl =
@@ -195,10 +198,11 @@ export const Map = (): JSX.Element => {
     const isDrawingRectangle = step === "drawRectangle"
 
     useEffect(() => {
-        if (settlementsData && settlementsData.length > 0) {
+        if (settlementsData && settlementsData.length >= questionCount) {
             dispatch(setAllVariants(settlementsData));
-        } else {
-            // alert('No settlements found in the selected area. Please try again with a different area or draw a rectangle on the map.')
+        } else if (settlementsData && settlementsData.length < questionCount) {
+            alert("Not enough settlements to play. Please change the area.");
+            dispatch(setStep('selectArea'));
         }
     }, [settlementsData]);
 
@@ -209,8 +213,8 @@ export const Map = (): JSX.Element => {
     }, [step])
 
     useEffect(() => {
-        if (step === "questions" && settlementsData) {
-            refetch();
+        if (step === "questions" && settlementsData && settlementsData.length > 0) {
+            dispatch(setAllVariants(settlementsData));
         }
     }, [step])
 
@@ -237,6 +241,18 @@ export const Map = (): JSX.Element => {
                         attribution="Tiles &copy; Esri"
                         url={imageryTileLayerUrl}
                     />
+
+                    {countryBorders && !isLabelsShown && (
+                        <GeoJSON
+                            data={countryBorders}
+                            style={{
+                                color: "#ffd60a",
+                                weight: 2,
+                                fillOpacity: 0,
+                                opacity: 1,
+                            }}
+                        />
+                    )}
 
                     {isLabelsShown && (
                         <TileLayer

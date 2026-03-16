@@ -2,7 +2,7 @@ import {createAppSlice} from "../../app/createAppSlice"
 import type {PayloadAction} from "@reduxjs/toolkit";
 import {Settlement} from "../map/mapAPI.ts";
 
-const questionCount = 10;
+export const questionCount = 10;
 const answerCount = 4;
 
 export type VariantName = string;
@@ -66,8 +66,12 @@ const setNewQuestion = (state: gameSliceState, {allVariants, prevAnswer}: {
     allVariants: VariantList,
     prevAnswer?: VariantName
 }) => {
-    const answerRandomIndex = Math.floor(Math.random() * allVariants.length);
-    const answerData = allVariants[answerRandomIndex];
+    const leftVariants = (state.leftVariants && state.leftVariants.length > 0
+        ? state.leftVariants
+        : (state.allVariants || allVariants || [])
+    );
+    const answerRandomIndex = Math.floor(Math.random() * leftVariants.length);
+    const answerData = leftVariants[answerRandomIndex];
     const answer = answerData.name;
     state.allVariants = allVariants;
     state.currentAnswer = answer;
@@ -77,15 +81,12 @@ const setNewQuestion = (state: gameSliceState, {allVariants, prevAnswer}: {
         .slice(0, answerCount - 1)
         .concat(answerData)
         .sort(() => Math.random() - 0.5);
-    const leftVariants = (state.leftVariants && state.leftVariants.length > 0
-            ? state.leftVariants
-            : state.allVariants || []
-    ).filter((item) => item.name !== answer);
+    const leftVariantsFiltered = leftVariants.filter((item) => item.name !== answer);
 
     if (prevAnswer) {
-        state.leftVariants = leftVariants.filter((item) => item.name !== prevAnswer);
+        state.leftVariants = leftVariantsFiltered.filter((item) => item.name !== prevAnswer);
     } else {
-        state.leftVariants = leftVariants;
+        state.leftVariants = leftVariantsFiltered;
     }
 }
 
