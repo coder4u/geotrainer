@@ -1,6 +1,9 @@
 import { JSX, useEffect } from "react"
 import { useMemo, useState } from "react"
-import { LatLngBounds } from "leaflet"
+import { LatLngBounds, icon } from "leaflet"
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
+import shadow from 'leaflet/dist/images/marker-shadow.png';
 import type { LatLng, LatLngTuple } from "leaflet"
 import "leaflet/dist/leaflet.css"
 import {
@@ -116,6 +119,14 @@ const MapCursorController = ({
 type MapInteractionControllerProps = {
     isDrawingEnabled: boolean
 }
+
+const DefaultIcon = icon({
+    iconUrl: markerIcon,
+    iconRetinaUrl: iconRetina,
+    shadowUrl: shadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
 
 const MapInteractionController = ({
     isDrawingEnabled,
@@ -233,7 +244,9 @@ export const Map = (): JSX.Element => {
 
                     {currentSettlement && step === 'questions' && (
                         <Marker
-                            position={currentSettlement.coords}>
+                            position={currentSettlement.coords}
+                            icon={DefaultIcon}
+                        >
                         </Marker>
                     )}
 
