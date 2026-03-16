@@ -7,6 +7,8 @@ import packageJson from "./package.json" with { type: "json" }
 export default defineConfig({
   plugins: [react()],
 
+  base: '/geotrainer/',
+
   server: {
     open: true,
   },
