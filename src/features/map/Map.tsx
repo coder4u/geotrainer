@@ -187,9 +187,10 @@ export const Map = (): JSX.Element => {
     });
 
     const isLabelsShown = step !== "questions"
-    const labelsPath = isLabelsShown
-        ? "rastertiles/voyager"
-        : "rastertiles/voyager_nolabels"
+    const imageryTileLayerUrl =
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    const labelsTileLayerUrl =
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
 
     const isDrawingRectangle = step === "drawRectangle"
 
@@ -233,9 +234,17 @@ export const Map = (): JSX.Element => {
                     style={{ height: "100%", width: "100%" }}
                 >
                     <TileLayer
-                        attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-                        url={`https://{s}.basemaps.cartocdn.com/${labelsPath}/{z}/{x}/{y}{r}.png`}
+                        attribution="Tiles &copy; Esri"
+                        url={imageryTileLayerUrl}
                     />
+
+                    {isLabelsShown && (
+                        <TileLayer
+                            attribution="Labels &copy; Esri"
+                            url={labelsTileLayerUrl}
+                            pane="overlayPane"
+                        />
+                    )}
 
                     {!isDrawingRectangle && <ZoomControl position="topleft" />}
 
