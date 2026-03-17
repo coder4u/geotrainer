@@ -1,6 +1,6 @@
 import { JSX, useEffect } from "react"
 import { useMemo, useState } from "react"
-import { LatLngBounds, icon } from "leaflet"
+import {LatLngBounds, icon, type LatLngExpression} from "leaflet"
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import shadow from 'leaflet/dist/images/marker-shadow.png';
@@ -160,6 +160,36 @@ const MapInteractionController = ({
     return null
 }
 
+type FocusMarkerButtonProps = {
+    markerPosition: LatLngExpression | null
+}
+
+const FocusMarkerButton = ({
+    markerPosition,
+}: FocusMarkerButtonProps): JSX.Element | null => {
+    const map = useMap()
+
+    if (!markerPosition) {
+        return null
+    }
+
+    const handleClick = (): void => {
+        map.flyTo(markerPosition, undefined, {
+            animate: true,
+            duration: 1.2,
+        })
+    }
+
+    return (
+        <button
+            type="button"
+            onClick={handleClick}
+            className="map-to-point-button"
+            title="Move to target"
+        />
+    )
+}
+
 export const Map = (): JSX.Element => {
     const dispatch = useAppDispatch();
     const step = useAppSelector(state => state.game.step)
@@ -268,11 +298,16 @@ export const Map = (): JSX.Element => {
                     <MapInteractionController isDrawingEnabled={isDrawingRectangle} />
 
                     {currentSettlement && step === 'questions' && (
-                        <Marker
-                            position={currentSettlement.coords}
-                            icon={DefaultIcon}
-                        >
-                        </Marker>
+                        <>
+                            <Marker
+                                position={currentSettlement.coords}
+                                icon={DefaultIcon}
+                            >
+                            </Marker>
+                            <FocusMarkerButton
+                                markerPosition={currentSettlement.coords}
+                            />
+                        </>
                     )}
 
                     {step === "drawRectangle" && (
