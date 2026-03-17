@@ -42,10 +42,17 @@
     width: 100%;
 }
 
+.overlay-question-counter {
+    font-weight: bold;
+    margin-left: auto;
+    padding-left: 10px;
+}
+
 .variants-list {
     padding: 8px 0;
     list-style-type: upper-alpha;
     list-style-position: inside;
+    margin: 10px 0 0 0;
 }
 
 .variant {
@@ -138,6 +145,7 @@
 }
 
 .map-to-point-button {
+    color: #17374e;
     font-size: 1.2rem;
     position: absolute;
     top: 16px;
@@ -152,8 +160,10 @@
     width: 30px;
 }
 
-.map-to-point-button:after {
-    content: "\01F3AF";
+.map-to-point-button > img {
+    display: block;
+    height: 100%;
+    width: 100%;
 }
 
 .sr-only {

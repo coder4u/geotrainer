@@ -2,12 +2,14 @@ import type {Action, ThunkAction} from "@reduxjs/toolkit"
 import {combineSlices, configureStore} from "@reduxjs/toolkit"
 import {setupListeners} from "@reduxjs/toolkit/query"
 import {mapApi} from "../features/map/mapAPI.ts"
+import {mapSlice} from "../features/map/mapSlice.ts"
 import {gameSlice} from "../features/game/gameSlice.ts"
+import {variantsListSlice} from "../features/variantsList/variantsListSlice.ts"
 // import { counterA } from "../features/counter/counterAPI"
 
 // `combineSlices` automatically combines the reducers using
 // their `reducerPath`s, therefore we no longer need to call `combineReducers`.
-const rootReducer = combineSlices(gameSlice, mapApi)
+const rootReducer = combineSlices(gameSlice, variantsListSlice, mapSlice, mapApi)
 // Infer the `RootState` type from the root reducer
 export type RootState = ReturnType<typeof rootReducer>
 

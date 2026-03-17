@@ -1,10 +1,12 @@
 import { JSX, useEffect } from "react"
-import { useMemo, useState } from "react"
-import {LatLngBounds, icon, type LatLngExpression} from "leaflet"
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
-import shadow from 'leaflet/dist/images/marker-shadow.png';
-import type { LatLng, LatLngTuple } from "leaflet"
+import { useMemo } from "react"
+import {icon} from "leaflet"
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import iconRetina from "leaflet/dist/images/marker-icon-2x.png";
+import shadowIcon from "leaflet/dist/images/marker-shadow.png";
+import type {GeoJsonObject} from "geojson";
+import countryBordersGeoJSON from "../../static/uaBorders.geo.json";
+import type { LatLngTuple } from "leaflet"
 import "leaflet/dist/leaflet.css"
 import {
     GeoJSON,
@@ -12,190 +14,35 @@ import {
     Marker,
     Rectangle,
     TileLayer,
-    useMap,
-    useMapEvents,
     ZoomControl,
 } from "react-leaflet"
 import { useAppSelector, useAppDispatch } from "../../app/hooks.ts"
-import {useGetCountryBordersQuery, useGetSettlementsByBoundsQuery} from "./mapAPI.ts";
-import {questionCount, setAllVariants, setParam, setStep} from "../game/gameSlice.ts";
+import {RectangleBounds, useGetSettlementsByBoundsQuery} from "./mapAPI.ts";
+import {setFirstStep} from "../game/gameSlice.ts";
+import {questionCount, setAllVariants} from "../variantsList/variantsListSlice.ts";
+import {setRectangleBounds} from "./mapSlice.ts";
 import Loading from "../loading/Loading.tsx";
+import FocusMarkerButton from "./FocusMarkerButton.tsx";
+import MapInteractionController from "./MapInteractionController.tsx";
+import MapCursorController from "./MapCursorController.tsx";
+import RectangleDrawer from "./RectangleDrawer.tsx";
 
-const position: LatLngTuple = [50.4501, 30.5234]
-
-type RectangleBounds = {
-    north: number
-    south: number
-    east: number
-    west: number
-}
-
-const getRectangleBounds = (bounds: LatLngBounds): RectangleBounds => ({
-    north: bounds.getNorth(),
-    south: bounds.getSouth(),
-    east: bounds.getEast(),
-    west: bounds.getWest(),
-})
-
-type RectangleDrawerProps = {
-    isDrawingEnabled: boolean
-    onBoundsChange: (bounds: RectangleBounds | null) => void
-    onDrawStart: () => void
-}
-
-const RectangleDrawer = ({
-    isDrawingEnabled,
-    onBoundsChange,
-    onDrawStart,
-}: RectangleDrawerProps): JSX.Element | null => {
-    const [startPoint, setStartPoint] = useState<LatLng | null>(null)
-    const [previewPoint, setPreviewPoint] = useState<LatLng | null>(null)
-
-    useMapEvents({
-        click(event) {
-            if (!isDrawingEnabled) {
-                return
-            }
-
-            if (!startPoint) {
-                onDrawStart()
-                setStartPoint(event.latlng)
-                setPreviewPoint(event.latlng)
-                return
-            }
-
-            const nextBounds = new LatLngBounds(startPoint, event.latlng)
-
-            onBoundsChange(getRectangleBounds(nextBounds))
-            setStartPoint(null)
-            setPreviewPoint(null)
-        },
-        mousemove(event) {
-            if (!isDrawingEnabled || !startPoint) {
-                return
-            }
-
-            setPreviewPoint(event.latlng)
-        },
-    })
-
-    if (!isDrawingEnabled || !startPoint || !previewPoint) {
-        return null
-    }
-
-    return (
-        <Rectangle
-            bounds={new LatLngBounds(startPoint, previewPoint)}
-            pathOptions={{
-                color: "#2563eb",
-                weight: 2,
-                fillOpacity: 0.15,
-            }}
-        />
-    )
-}
-
-type MapCursorControllerProps = {
-    isDrawingEnabled: boolean
-}
-
-const MapCursorController = ({
-    isDrawingEnabled,
-}: MapCursorControllerProps): null => {
-    const map = useMap()
-
-    useEffect(() => {
-        const container = map.getContainer()
-        const previousCursor = container.style.cursor
-
-        container.style.cursor = isDrawingEnabled ? "crosshair" : ""
-
-        return () => {
-            container.style.cursor = previousCursor
-        }
-    }, [map, isDrawingEnabled])
-
-    return null
-}
-
-type MapInteractionControllerProps = {
-    isDrawingEnabled: boolean
-}
+const position: LatLngTuple = [50.4501, 30.5234];
 
 const DefaultIcon = icon({
     iconUrl: markerIcon,
     iconRetinaUrl: iconRetina,
-    shadowUrl: shadow,
+    shadowUrl: shadowIcon,
     iconSize: [25, 41],
     iconAnchor: [12, 41]
 });
 
-const MapInteractionController = ({
-    isDrawingEnabled,
-}: MapInteractionControllerProps): null => {
-    const map = useMap()
-
-    useEffect(() => {
-        if (!isDrawingEnabled) {
-            return
-        }
-
-        map.dragging.disable()
-        map.scrollWheelZoom.disable()
-        map.doubleClickZoom.disable()
-        map.touchZoom.disable()
-        map.boxZoom.disable()
-        map.keyboard.disable()
-
-        return () => {
-            map.dragging.enable()
-            map.scrollWheelZoom.enable()
-            map.doubleClickZoom.enable()
-            map.touchZoom.enable()
-            map.boxZoom.enable()
-            map.keyboard.enable()
-        }
-    }, [map, isDrawingEnabled])
-
-    return null
-}
-
-type FocusMarkerButtonProps = {
-    markerPosition: LatLngExpression | null
-}
-
-const FocusMarkerButton = ({
-    markerPosition,
-}: FocusMarkerButtonProps): JSX.Element | null => {
-    const map = useMap()
-
-    if (!markerPosition) {
-        return null
-    }
-
-    const handleClick = (): void => {
-        map.flyTo(markerPosition, undefined, {
-            animate: true,
-            duration: 1.2,
-        })
-    }
-
-    return (
-        <button
-            type="button"
-            onClick={handleClick}
-            className="map-to-point-button"
-            title="Move to target"
-        />
-    )
-}
-
 export const Map = (): JSX.Element => {
     const dispatch = useAppDispatch();
     const step = useAppSelector(state => state.game.step)
-    const currentAnswer = useAppSelector(state => state.game.currentAnswer)
-    const allVariants = useAppSelector(state => state.game.allVariants)
-    const [rectangleBounds, setRectangleBounds] = useState<RectangleBounds | null>(null)
+    const currentAnswer = useAppSelector(state => state.variantsList.currentAnswer)
+    const allVariants = useAppSelector(state => state.variantsList.allVariants)
+    const rectangleBounds = useAppSelector(state => state.map.rectangleBounds)
 
     const rectangleLatLngBounds = useMemo(() => {
         if (!rectangleBounds) {
@@ -208,16 +55,9 @@ export const Map = (): JSX.Element => {
         ] as LatLngTuple[]
     }, [rectangleBounds])
 
-    useEffect(() => {
-        if (rectangleLatLngBounds) {
-            dispatch(setParam({ name: "buttonText", value: "Next" }));
-        }
-    }, [rectangleLatLngBounds]);
-
     const {currentData: settlementsData, isFetching, isError, } = useGetSettlementsByBoundsQuery(rectangleBounds as RectangleBounds, {
         skip: !rectangleBounds || step !== "questions",
     });
-    const {data: countryBorders} = useGetCountryBordersQuery();
 
     const isLabelsShown = step !== "questions"
     const imageryTileLayerUrl =
@@ -232,13 +72,13 @@ export const Map = (): JSX.Element => {
             dispatch(setAllVariants(settlementsData));
         } else if (settlementsData && settlementsData.length < questionCount) {
             alert("Not enough settlements to play. Please change the area.");
-            dispatch(setStep('selectArea'));
+            dispatch(setFirstStep());
         }
     }, [settlementsData]);
 
     useEffect(() => {
         if (step === "drawRectangle") {
-            setRectangleBounds(null)
+            dispatch(setRectangleBounds(null));
         }
     }, [step])
 
@@ -252,7 +92,7 @@ export const Map = (): JSX.Element => {
         if (isError) {
             alert('Error fetching settlements. Please try again.');
 
-            dispatch(setStep('selectArea'));
+            dispatch(setFirstStep());
         }
     }, [isError]);
 
@@ -272,9 +112,9 @@ export const Map = (): JSX.Element => {
                         url={imageryTileLayerUrl}
                     />
 
-                    {countryBorders && !isLabelsShown && (
+                    {!isLabelsShown && (
                         <GeoJSON
-                            data={countryBorders}
+                            data={countryBordersGeoJSON as GeoJsonObject}
                             style={{
                                 color: "#ffd60a",
                                 weight: 2,
@@ -314,8 +154,8 @@ export const Map = (): JSX.Element => {
                         <>
                             <RectangleDrawer
                                 isDrawingEnabled={isDrawingRectangle}
-                                onBoundsChange={setRectangleBounds}
-                                onDrawStart={() => setRectangleBounds(null)}
+                                onBoundsChange={(bounds) => dispatch(setRectangleBounds(bounds))}
+                                onDrawStart={() => dispatch(setRectangleBounds(null))}
                             />
                             {rectangleLatLngBounds && (
                                 <Rectangle

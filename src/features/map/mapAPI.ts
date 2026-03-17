@@ -1,5 +1,4 @@
 import {createApi, fetchBaseQuery, retry} from "@reduxjs/toolkit/query/react"
-import type {GeoJsonObject} from "geojson";
 
 export type RectangleBounds = {
     north: number
@@ -30,8 +29,6 @@ type OverpassElement = {
 type OverpassResponse = {
     elements?: OverpassElement[]
 }
-
-type CountryBordersResponse = GeoJsonObject;
 
 const buildSettlementsQuery = (bounds: RectangleBounds): string => {
     const bbox = `${bounds.south},${bounds.west},${bounds.north},${bounds.east}`
@@ -85,16 +82,7 @@ export const mapApi = createApi({
                     }))
             },
         }),
-        getCountryBorders: builder.query<CountryBordersResponse, void>({
-            query: () => ({
-                url: "https://raw.githubusercontent.com/slawomirmatuszak/ukrainian_geodata/refs/heads/main/regiony.geojson",
-                method: "GET",
-                responseHandler: async (response: { json: () => CountryBordersResponse | PromiseLike<CountryBordersResponse> }) => {
-                    return await response.json()
-                },
-            }),
-        }),
     }),
 })
 
-export const {useGetSettlementsByBoundsQuery, useGetCountryBordersQuery} = mapApi
+export const {useGetSettlementsByBoundsQuery} = mapApi

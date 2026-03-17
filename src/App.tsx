@@ -1,10 +1,10 @@
-import "./App.css"
-import {Map} from "./features/map/Map"
-import Overlay from "./features/overlay/Overlay"
+import "./App.css";
+import './i18n/config';
+import {Map} from "./features/map/Map";
+import Overlay from "./features/overlay/Overlay";
 
 export const App = () => (
     <div className="App">
-        <header className="App-header"></header>
         <div className="main">
             <Map/>
         </div>

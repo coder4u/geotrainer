@@ -1,24 +1,38 @@
 import {useAppSelector, useAppDispatch} from "../../app/hooks.ts";
-import {questionAnswer, VariantName} from "../game/gameSlice.ts";
-import {useState} from "react";
+import {endIndex, questionAnswer, reset, VariantName} from "./variantsListSlice.ts";
+import {useEffect, useState} from "react";
+import {scoreUp, setNextStep} from "../game/gameSlice.ts";
 
 
 const VariantsList = () => {
     const [isAnswerClicked, setIsAnswerClicked] = useState(false);
     const dispatch = useAppDispatch();
 
-    const currentVariantList = useAppSelector(state => state.game.currentVariantList) || [];
-    const currentAnswer = useAppSelector(state => state.game.currentAnswer) || [];
+    const currentVariantList = useAppSelector(state => state.variantsList.currentVariantList) || [];
+    const currentAnswer = useAppSelector(state => state.variantsList.currentAnswer) || [];
+    const questionIndex = useAppSelector(state => state.variantsList.questionIndex) || [];
 
     const clickHandler = (answerName: VariantName) => {
-        const isCorrect = answerName === currentAnswer;
+        if (!isAnswerClicked) {
+            const isCorrect = answerName === currentAnswer;
 
-        setIsAnswerClicked(true)
-        setTimeout(() => {
-            dispatch(questionAnswer({ answer: answerName, isCorrect }))
-            setIsAnswerClicked(false)
-        }, 1000);
+            setIsAnswerClicked(true)
+            setTimeout(() => {
+                if (isCorrect) {
+                    dispatch(scoreUp());
+                }
+                dispatch(questionAnswer(answerName));
+                setIsAnswerClicked(false)
+            }, 1000);
+        }
     }
+
+    useEffect(() => {
+        if (questionIndex === endIndex) {
+            dispatch(reset());
+            dispatch(setNextStep());
+        }
+    }, [questionIndex])
 
     return (
         <ul className="variants-list">
